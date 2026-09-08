@@ -413,6 +413,56 @@
     text-align: center;
   }
 
+
+  /* Fullscreen Mode Styling */
+  .card:fullscreen,
+  .card:-webkit-full-screen {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: #060a14 !important;
+    padding: 12px 16px !important;
+    overflow: hidden !important;
+  }
+
+  .card:fullscreen .game-wrapper,
+  .card:-webkit-full-screen .game-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .card:fullscreen .canvas-container,
+  .card:-webkit-full-screen .canvas-container {
+    max-height: calc(100vh - 140px);
+    max-width: calc(100vw - 24px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .card:fullscreen #gameCanvas,
+  .card:-webkit-full-screen #gameCanvas {
+    max-height: calc(100vh - 150px);
+    max-width: calc(100vw - 32px);
+    width: auto;
+    height: auto;
+  }
+
+  .card:fullscreen .d-pad,
+  .card:-webkit-full-screen .d-pad {
+    margin-top: 4px;
+  }
+
   footer {
     text-align: center;
     font-size: 12px;
@@ -446,16 +496,17 @@
   </header>
 
   <!-- Main Game Stage Card -->
-  <div class="card">
+  <div class="card" id="gameCard">
     <!-- Stage Info & Select Bar -->
     <div class="stage-bar">
       <div class="stage-info-text">
         <span id="currentStageBadge">STAGE 1 / 12</span>
         <span id="currentStageTitle" style="color:#ffffff;">1막 (11x11)</span>
       </div>
-      <div style="display:flex; gap:8px; align-items:center;">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         <select id="stageSelect" class="stage-select-dropdown" onchange="changeStage(parseInt(this.value))">
         </select>
+        <button class="btn-chip" id="fullscreenToggleBtn" onclick="toggleFullscreen()">전체화면</button>
         <button class="btn-chip active" id="audioToggleBtn" onclick="toggleAudio()">소리 켜짐</button>
         <button class="btn-chip" id="retryStageBtn" onclick="resetStage()">재도전</button>
       </div>
@@ -642,6 +693,8 @@ const I18N = {
     stagePrefix: (id) => `${id}막`,
     stageCardSubtitle: (w, h, g) => `크기: ${w}x${h} • 적: ${g}명`,
     specialDishLabel: '특수요리',
+    fullscreen: '전체화면',
+    exitFullscreen: '전체화면 종료',
     soundOn: '소리 켜짐',
     soundOff: '음소거',
     retry: '재도전',
@@ -694,6 +747,8 @@ const I18N = {
     stagePrefix: (id) => `第${id}幕`,
     stageCardSubtitle: (w, h, g) => `尺寸：${w}x${h} • 敵人：${g}人`,
     specialDishLabel: '特色料理',
+    fullscreen: '全螢幕',
+    exitFullscreen: '退出全螢幕',
     soundOn: '聲音開啟',
     soundOff: '靜音',
     retry: '重新挑戰',
@@ -746,6 +801,8 @@ const I18N = {
     stagePrefix: (id) => `第${id}幕`,
     stageCardSubtitle: (w, h, g) => `尺寸：${w}x${h} • 敌人：${g}人`,
     specialDishLabel: '特色料理',
+    fullscreen: '全屏',
+    exitFullscreen: '退出全屏',
     soundOn: '声音开启',
     soundOff: '静音',
     retry: '重新挑战',
@@ -798,6 +855,8 @@ const I18N = {
     stagePrefix: (id) => `第${id}幕`,
     stageCardSubtitle: (w, h, g) => `サイズ：${w}x${h} • 敵：${g}人`,
     specialDishLabel: '特殊料理',
+    fullscreen: '全画面',
+    exitFullscreen: '全画面終了',
     soundOn: 'サウンド ON',
     soundOff: 'サウンド OFF',
     retry: 'リトライ',
@@ -850,6 +909,8 @@ const I18N = {
     stagePrefix: (id) => `Act ${id}`,
     stageCardSubtitle: (w, h, g) => `Size: ${w}x${h} • Enemies: ${g}`,
     specialDishLabel: 'Special Dish',
+    fullscreen: 'Fullscreen',
+    exitFullscreen: 'Exit Fullscreen',
     soundOn: 'Sound ON',
     soundOff: 'Muted',
     retry: 'Retry',
@@ -935,6 +996,8 @@ function setLanguage(lang) {
 
   const retryBtn = document.getElementById('retryStageBtn');
   if (retryBtn) retryBtn.textContent = t.retry;
+
+  updateFullscreenBtn();
 
   const hint = document.getElementById('controlsHint');
   if (hint) hint.textContent = t.controlsHint;
@@ -1692,6 +1755,7 @@ function resetGame() {
 
 function startGame() {
   if (initAudio) initAudio();
+  focusGameArea();
   if (gameState === 'victory') {
     currentStageIndex = 0;
     score = 0;
@@ -1723,14 +1787,60 @@ function updateHUD() {
   document.getElementById('livesDisplay').textContent = liveIcons;
 }
 
-// Input Handling
+// Fullscreen & Focus Management
+function toggleFullscreen() {
+  const card = document.getElementById('gameCard') || document.documentElement;
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (card.requestFullscreen) {
+      card.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
+    } else if (card.webkitRequestFullscreen) {
+      card.webkitRequestFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(err => console.log('Exit fullscreen failed:', err));
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+}
+
+function updateFullscreenBtn() {
+  const btn = document.getElementById('fullscreenToggleBtn');
+  if (!btn) return;
+  const t = I18N[currentLang];
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  btn.textContent = isFs ? `${t.exitFullscreen}` : `${t.fullscreen}`;
+  if (isFs) btn.classList.add('active');
+  else btn.classList.remove('active');
+}
+
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('fullscreenchange', updateFullscreenBtn);
+  document.addEventListener('webkitfullscreenchange', updateFullscreenBtn);
+}
+
+function focusGameArea() {
+  const container = document.getElementById('canvasContainer');
+  if (container && typeof container.scrollIntoView === 'function') {
+    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// Input Handling with Arrow Key Scroll Prevention
 window.addEventListener('keydown', (e) => {
   const k = e.key;
+  const gameKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 's', 'S', 'a', 'A', 'd', 'D', ' '];
+  
+  if (gameKeys.includes(k)) {
+    e.preventDefault(); // Stop window/page from scrolling!
+  }
+
   if (['ArrowUp', 'w', 'W'].includes(k)) triggerKey('ArrowUp');
   else if (['ArrowDown', 's', 'S'].includes(k)) triggerKey('ArrowDown');
   else if (['ArrowLeft', 'a', 'A'].includes(k)) triggerKey('ArrowLeft');
   else if (['ArrowRight', 'd', 'D'].includes(k)) triggerKey('ArrowRight');
-});
+}, { passive: false });
 
 function triggerKey(code) {
   if (gameState === 'ready') {
@@ -1901,14 +2011,15 @@ function renderAttractMode() {
 
   const w = gameCanvas.width;
   const h = gameCanvas.height;
-  const t = I18N[currentLang];
 
+  // Background
   ctx.fillStyle = '#060a14';
   ctx.fillRect(0, 0, w, h);
 
-  ctx.strokeStyle = 'rgba(33, 70, 210, 0.18)';
+  // High-tech glowing grid background
+  ctx.strokeStyle = 'rgba(33, 70, 210, 0.15)';
   ctx.lineWidth = 1;
-  const gStep = 24;
+  const gStep = 28;
   for (let x = 0; x < w; x += gStep) {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
   }
@@ -1916,67 +2027,61 @@ function renderAttractMode() {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
   }
 
+  // Outer Glowing Neon Frame
   ctx.strokeStyle = '#2146d2';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 4;
   ctx.strokeRect(4, 4, w - 8, h - 8);
 
   const mouthCycle = [0, 1, 2, 3, 2, 1];
   const frameIdx = mouthCycle[Math.floor(attractTick / 6) % mouthCycle.length];
   const charImg = charFrames[frameIdx];
 
-  // Mode 0: In-place Chomp
+  // Mode 0: In-place Chomp (Large & Clean - Zero Text)
   if (attractMode === 0) {
-    ctx.fillStyle = '#ffc837';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`🍗 ${t.gifChompTitle} 🍗`, w / 2, 36);
+    const headSize = Math.min(270, w * 0.62);
+    const drumX = w / 2 + 100 + Math.sin(attractTick * 0.08) * 16;
+    const drumY = h / 2 - 8;
+    const drumSize = 62;
 
-    const drumX = w / 2 + 80 + Math.sin(attractTick * 0.08) * 12;
-    const drumY = h / 2 - 10;
-    if (imgChicken.complete) {
-      ctx.drawImage(imgChicken, drumX, drumY - 22, 44, 44);
+    if (imgChicken.complete && imgChicken.naturalWidth > 0) {
+      ctx.drawImage(imgChicken, drumX, drumY - drumSize / 2, drumSize, drumSize);
     }
 
-    const headSize = Math.min(190, w * 0.45);
     if (charImg && charImg.complete && charImg.naturalWidth > 0) {
-      ctx.drawImage(charImg, w / 2 - headSize / 2 - 20, h / 2 - headSize / 2, headSize, headSize);
+      ctx.drawImage(charImg, w / 2 - headSize / 2 - 35, h / 2 - headSize / 2, headSize, headSize);
     }
   }
 
-  // Mode 1: Chicken Hunter Showcase
+  // Mode 1: Chicken Hunter Showcase (Flying Feast - Zero Text)
   else if (attractMode === 1) {
-    ctx.fillStyle = '#ffc837';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`🍗 ${t.gifShowcaseTitle} 🍗`, w / 2, 36);
-
-    const headSize = Math.min(180, w * 0.42);
-    const hx = w / 2 - 50;
+    const headSize = Math.min(250, w * 0.56);
+    const hx = w / 2 - 70;
     const hy = h / 2;
 
     if (charImg && charImg.complete && charImg.naturalWidth > 0) {
       ctx.drawImage(charImg, hx - headSize / 2, hy - headSize / 2, headSize, headSize);
     }
 
-    const foodPeriod = 50;
+    const foodPeriod = 46;
     const foodProgress = (attractTick % foodPeriod) / foodPeriod;
-    const foodX = (w - 30) - foodProgress * (w - 30 - (hx + 35));
+    const foodX = (w - 20) - foodProgress * (w - 20 - (hx + 55));
     const foodY = hy;
+    const drumSize = 52;
 
-    if (foodProgress < 0.95 && imgChicken.complete) {
-      ctx.drawImage(imgChicken, foodX - 18, foodY - 18, 36, 36);
+    if (foodProgress < 0.95 && imgChicken.complete && imgChicken.naturalWidth > 0) {
+      ctx.drawImage(imgChicken, foodX - drumSize / 2, foodY - drumSize / 2, drumSize, drumSize);
     }
 
     if (attractTick % foodPeriod === 0) {
       if (audioEnabled) playChompSound();
-      attractPopups.push({ text: '+100', x: hx + 45, y: hy - 20, life: 35 });
-      for (let p = 0; p < 8; p++) {
-        const ang = (p / 8) * Math.PI * 2;
+      attractPopups.push({ text: '+100', x: hx + 65, y: hy - 25, life: 35 });
+      for (let p = 0; p < 10; p++) {
+        const ang = (p / 10) * Math.PI * 2;
         attractParticles.push({
-          x: hx + 35,
+          x: hx + 55,
           y: hy,
-          vx: Math.cos(ang) * (2 + Math.random() * 2.5),
-          vy: Math.sin(ang) * (2 + Math.random() * 2.5),
+          vx: Math.cos(ang) * (2.5 + Math.random() * 3),
+          vy: Math.sin(ang) * (2.5 + Math.random() * 3),
           life: 25,
           color: p % 2 === 0 ? '#ffc837' : '#00e5ff'
         });
@@ -1984,25 +2089,21 @@ function renderAttractMode() {
     }
   }
 
-  // Mode 2: Moving & Eating
+  // Mode 2: Moving & Eating (Dynamic Side-scroll - Zero Text)
   else if (attractMode === 2) {
-    ctx.fillStyle = '#ffc837';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`🍗 ${t.gifMovingTitle} 🍗`, w / 2, 36);
-
     const laneY = h / 2;
-    const headSize = Math.min(120, w * 0.32);
+    const headSize = Math.min(180, w * 0.42);
     const cyclePeriod = 160;
     const progress = (attractTick % cyclePeriod) / cyclePeriod;
     const posX = -headSize + progress * (w + headSize * 2);
 
-    const numDrums = 7;
+    const numDrums = 8;
+    const drumSize = 38;
     for (let i = 0; i < numDrums; i++) {
-      const dx = 40 + (i / (numDrums - 1)) * (w - 80);
-      if (dx > posX + 25) {
-        if (imgChicken.complete) {
-          ctx.drawImage(imgChicken, dx - 12, laneY - 12, 24, 24);
+      const dx = 45 + (i / (numDrums - 1)) * (w - 90);
+      if (dx > posX + 35) {
+        if (imgChicken.complete && imgChicken.naturalWidth > 0) {
+          ctx.drawImage(imgChicken, dx - drumSize / 2, laneY - drumSize / 2, drumSize, drumSize);
         }
       }
     }
@@ -2012,21 +2113,18 @@ function renderAttractMode() {
     }
   }
 
-  // Mode 3: 4-Way Maze Demo
+  // Mode 3: 4-Way Maze Demo (Full Maze Sweep - Zero Text)
   else if (attractMode === 3) {
-    ctx.fillStyle = '#ffc837';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`🍗 ${t.gifDemoTitle} 🍗`, w / 2, 36);
+    const mx1 = 50, my1 = 50, mx2 = w - 50, my2 = h - 50;
 
-    const mx1 = 60, my1 = 65, mx2 = w - 60, my2 = h - 65;
+    // Dual Neon Circuit Track
     ctx.strokeStyle = '#2146d2';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(mx1 - 16, my1 - 16, (mx2 - mx1) + 32, (my2 - my1) + 32);
-    ctx.strokeRect(mx1 + 24, my1 + 24, (mx2 - mx1) - 48, (my2 - my1) - 48);
+    ctx.lineWidth = 4;
+    ctx.strokeRect(mx1 - 22, my1 - 22, (mx2 - mx1) + 44, (my2 - my1) + 44);
+    ctx.strokeRect(mx1 + 35, my1 + 35, (mx2 - mx1) - 70, (my2 - my1) - 70);
 
     const perim = ((mx2 - mx1) + (my2 - my1)) * 2;
-    const speed = 2.6;
+    const speed = 2.8;
     const distOnPath = (attractTick * speed) % perim;
 
     let px = mx1, py = my1, angle = 0, flipX = false;
@@ -2044,7 +2142,8 @@ function renderAttractMode() {
       px = mx1; py = my2 - (distOnPath - topLen - rightLen - botLen); angle = -Math.PI / 2; flipX = false;
     }
 
-    const dotSpacing = 30;
+    const dotSpacing = 34;
+    const drumSize = 28;
     for (let d = 0; d < perim; d += dotSpacing) {
       if (d > distOnPath) {
         let dx = mx1, dy = my1;
@@ -2052,13 +2151,13 @@ function renderAttractMode() {
         else if (d < topLen + rightLen) { dx = mx2; dy = my1 + (d - topLen); }
         else if (d < topLen + rightLen + botLen) { dx = mx2 - (d - topLen - rightLen); dy = my2; }
         else { dx = mx1; dy = my2 - (d - topLen - rightLen - botLen); }
-        if (imgChicken.complete) {
-          ctx.drawImage(imgChicken, dx - 9, dy - 9, 18, 18);
+        if (imgChicken.complete && imgChicken.naturalWidth > 0) {
+          ctx.drawImage(imgChicken, dx - drumSize / 2, dy - drumSize / 2, drumSize, drumSize);
         }
       }
     }
 
-    const headSize = 64;
+    const headSize = Math.min(94, w * 0.22);
     ctx.save();
     ctx.translate(px, py);
     ctx.rotate(angle);
@@ -2069,6 +2168,7 @@ function renderAttractMode() {
     ctx.restore();
   }
 
+  // Particle Effects
   for (let i = attractParticles.length - 1; i >= 0; i--) {
     const p = attractParticles[i];
     p.x += p.vx;
@@ -2077,34 +2177,22 @@ function renderAttractMode() {
     if (p.life <= 0) { attractParticles.splice(i, 1); continue; }
     ctx.fillStyle = p.color;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
     ctx.fill();
   }
 
+  // Score Popups
   for (let i = attractPopups.length - 1; i >= 0; i--) {
     const pop = attractPopups[i];
     pop.y -= 0.8;
     pop.life--;
     if (pop.life <= 0) { attractPopups.splice(i, 1); continue; }
     ctx.fillStyle = '#00e5ff';
-    ctx.font = 'bold 14px sans-serif';
+    ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(pop.text, pop.x, pop.y);
   }
-
-  const pulse = Math.sin(Date.now() * 0.006) * 0.05 + 1.0;
-  ctx.save();
-  ctx.translate(w / 2, h - 30);
-  ctx.scale(pulse, pulse);
-  ctx.fillStyle = '#ffc837';
-  ctx.font = 'bold 15px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.shadowColor = 'rgba(255, 200, 55, 0.8)';
-  ctx.shadowBlur = 10;
-  ctx.fillText(t.attractPrompt || '🍗 화면을 클릭하여 시작 🍗', 0, 0);
-  ctx.restore();
 }
-
 // -------------------------------------------------------------
 // Update Game Loop
 // -------------------------------------------------------------
@@ -2809,5 +2897,5 @@ renderStageList();
 initStage(0);
 requestAnimationFrame(gameLoop);
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a37abd290f0fd1d3',t:'MTc4ODgzNjgwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

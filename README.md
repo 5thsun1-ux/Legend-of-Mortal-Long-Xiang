@@ -16,7 +16,7 @@
 - 실행 및 조작:
   * PC: 방향키(상하좌우) 또는 W, A, S, D
   * 모바일: 화면 하단 온스크린 터치 패드
-  * 설치 없이 index.html 파일을 브라우저로 열면 즉시 실행되며, GitHub Pages로 무료 웹 배포가 가능합니다.
+  * 설치 없이 index.html 파일을 브라우저로 열면 즉시 실행되며, 공식 웹 페이지( https://5thsun1-ux.github.io/Legend-of-Mortal-Long-Xiang/ )에서 바로 플레이할 수 있습니다.
 
 ---
 
@@ -32,7 +32,7 @@
 - 操作與運行:
   * PC：方向鍵 或 W, A, S, D
   * 行動裝置：螢幕下方虛擬觸控按鈕
-  * 無需安裝，雙擊 index.html 即可在瀏覽器遊玩，亦支援 GitHub Pages 免費託管上線。
+  * 無需安裝，雙擊 index.html 即可在瀏覽器遊玩，亦可直接於官方網頁 ( https://5thsun1-ux.github.io/Legend-of-Mortal-Long-Xiang/ ) 線上遊玩。
 
 ---
 
@@ -48,7 +48,7 @@
 - 操作与运行:
   * PC：方向键 或 W, A, S, D
   * 移动端：屏幕下方虚拟触控方向盘
-  * 纯静态单文件，直接使用浏览器打开 index.html 即可运行，支持 GitHub Pages 一键部署。
+  * 纯静态单文件，直接使用浏览器打开 index.html 即可运行，亦可直接访问官方网页 ( https://5thsun1-ux.github.io/Legend-of-Mortal-Long-Xiang/ ) 在线游玩。
 
 ---
 
@@ -64,7 +64,7 @@
 - 操作方法とプレイ環境:
   * PC：矢印キー または W, A, S, D
   * モバイル：画面下部のオンスクリーン十字キー
-  * インストール不要で index.html をブラウザで開くだけで即座にプレイ可能、GitHub Pages での配信にも完全対応しています。
+  * インストール不要で index.html をブラウザで開くだけで即座にプレイ可能、公式ウェブページ ( https://5thsun1-ux.github.io/Legend-of-Mortal-Long-Xiang/ ) から直接プレイできます。
 
 ---
 
@@ -80,7 +80,7 @@
 - Controls & Execution:
   * PC: Arrow Keys or W, A, S, D
   * Mobile: On-screen touch directional pad
-  * Fully standalone single-file architecture. Open index.html directly in any modern web browser or deploy via GitHub Pages.
+  * Fully standalone single-file architecture. Open index.html directly in any modern web browser or play instantly at https://5thsun1-ux.github.io/Legend-of-Mortal-Long-Xiang/
 
 ---
 
@@ -153,7 +153,7 @@
 - 저장소 페이지 상단의 Settings 메뉴로 이동합니다.
 - 좌측 사이드바의 Pages 항목을 클릭합니다.
 - Build and deployment 섹션에서 Branch를 main (또는 master)으로 설정하고, 폴더를 /(root)로 지정한 뒤 Save를 누릅니다.
-- 잠시 후 생성되는 URL(예: https://username.github.io/repository-name/)을 통해 전 세계 어디서나 웹으로 접속하여 플레이할 수 있습니다.
+- 배포 완료 후 제공되는 공식 웹 주소( https://5thsun1-ux.github.io/Legend-of-Mortal-Long-Xiang/ )를 통해 전 세계 어디서나 웹 브라우저로 즉시 접속하여 플레이할 수 있습니다.
 
 ---
 
